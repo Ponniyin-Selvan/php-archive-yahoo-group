@@ -1,0 +1,55 @@
+<?php
+class GetEmailContents extends BasePlugin {
+	var $logger;
+   
+	function GetEmailContents(){
+        $this->logger =& LoggerManager::getLogger('GetEmailContents');
+    }
+
+	function getMailParts($part, $mailParts = null) {
+
+		if ($mailParts == null) {
+			$mailParts = array();
+		}
+		if ($part instanceof ezcMail) {
+			$mailParts = $this->getMailParts($part->body, $mailParts);
+
+		} else if ($part instanceof ezcMailText) {
+			if (!array_key_exists($part->subType, $mailParts)) {
+				$mailParts[$part->subType] = array();
+			}
+			$mailParts[$part->subType][] = $part->text;
+
+		} else if ($part instanceof ezcMailRfc822Digest) {
+			$mailParts = $this->getMailParts($part->mail, $mailParts);
+
+		} else if ($part instanceof ezcMailMultiPartAlternative
+						|| $part instanceof ezcMailMultipartMixed) {
+			foreach ($part->getParts() as $key => $alternativePart)  {
+				$mailParts = $this->getMailParts($alternativePart, $mailParts);
+			}
+		} else if ($part instanceof ezcMailMultiPartRelated ) {
+			$mailParts = $this->getMailParts($part->getMainPart(), $mailParts);
+
+		} else if ($part instanceof ezcMailFile) {
+			// ignore
+		} else {
+			$this->logger->error("No clue about the ".get_class( $part )."\n");
+		}
+		return $mailParts;
+	}
+
+	public function handleMessage(&$messageDetails) {
+		if (isset($messageDetails['email'])) {
+			$mailParts = $this->getMailParts($messageDetails['email']->body);
+			foreach($mailParts as $type => $parts) {
+				//$mailParts[$type][0] = iconv("UTF-8", "UTF-8//IGNORE", $parts[0]);
+				$this->logger->debug("$type encoding - ".mb_detect_encoding($parts[0]), "auto");
+			}
+			$messageDetails['mail_body'] = $mailParts;
+		} else {
+			$this->logger->error("Couldn't find email object");
+		}
+	}
+}
+?>

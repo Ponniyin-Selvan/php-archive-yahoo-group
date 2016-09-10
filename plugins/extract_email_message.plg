@@ -1,0 +1,50 @@
+<?php
+class ExtractEmailMessage extends BasePlugin {
+	var $logger;
+   
+	function ExtractEmailMessage(){
+        $this->logger =& LoggerManager::getLogger('ExtractEmailMessage');
+    }
+
+	function formatEmail($emailSource) {
+	   
+	   $readableEmail = $emailSource;
+	   $readableEmail = str_replace("<br>\n", "<br />\n", $readableEmail);
+	   $readableEmail = str_replace("<br>", "\n", $readableEmail);
+	   $readableEmail = str_replace("<br />\n", "<br>\n", $readableEmail);
+	   $readableEmail = html_entity_decode(strip_tags($readableEmail));
+	   //$readableEmail = str_replace("From ", "From: ", $readableEmail);
+	
+	   $lines = split("[\n]", $readableEmail);
+	   $header = true;
+	   $parsed_mail_source = "";
+
+	   foreach($lines as $line) {
+	      if ($line == '' && $header) {
+	         continue;
+	      } else if (strpos($line, 'From ') !== false) {
+		             continue;
+		  }
+	      $line = (strpos($line, 'Content-Type:') !== false ? ltrim($line) : $line);
+	      $line = (substr($line, 0, 3) === ' --' ? ltrim($line) : $line);
+	      $parsed_mail_source = $parsed_mail_source . $line . "\n";
+	      if (strpos($line, 'X-Yahoo-Profile:') !== false) {
+	          $parsed_mail_source = $parsed_mail_source."\n";
+		  $header = false;
+	      }
+	   }
+	   return $parsed_mail_source;
+	}
+
+	public function handleMessage(&$messageDetails) {
+		$email = $this->formatEmail($messageDetails['original_email_source']);
+		$messageDetails['formatted_email_source'] = $email;
+		
+		//TODO - eZ components are loaded from plugin Manager - can we make it only plugin dependent?
+		$parser = new ezcMailParser();
+    	$set = new ezcMailVariableSet( $email );
+    	$mail = $parser->parseMail( $set );
+    	$messageDetails['email'] = $mail[0];
+	}
+}
+?>

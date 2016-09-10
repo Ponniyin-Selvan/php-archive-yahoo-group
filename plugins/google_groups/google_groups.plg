@@ -1,0 +1,37 @@
+<?php
+class GoogleGroups extends BasePlugin {
+	private $logger;
+	private $groupEmailAddress;
+	private $fromEmailAddress;
+	
+	function GoogleGroups(){
+        $this->logger =& LoggerManager::getLogger('GoogleGroups');
+    }
+
+    public function onLoad(&$settings) {
+		$this->groupEmailAddress = $settings['group.email'];
+		$this->fromEmailAddress = $settings['from.email'];
+	}
+
+	public function handleMessage(&$messageDetails) {
+
+		//TODO - make a copy or restore the old values back
+		$email = $messageDetails['email'];
+		$emailCopy = clone $email;
+		$emailText = $emailCopy->body;
+		$emailCopy->from = new ezcMailAddress( $this->fromEmailAddress);
+		$emailCopy->returnPath = $emailCopy->from;
+		$emailCopy->setHeader('Return-Path', $this->fromEmailAddress);
+		$emailCopy->to = array(new ezcMailAddress( $this->groupEmailAddress));
+		
+		//TODO - Set the shameless plug to add the archiver application message
+		$emailText->setHeader('X-Message-No', $messageDetails['message_no']);
+		//TODO - Only one received header is stored after parsing, can we fix the email parser
+		// to store more than one header
+		//$this->logger->debug("Groups modified email ".$emailCopy->generate());
+		
+		$transport = new ezcMailSmtpTransport( 'alt2.gmr-smtp-in.l.google.com');
+		$transport->send( $emailCopy );
+	}
+}
+?>

@@ -1,0 +1,48 @@
+<?php
+class ExtractEmailSource extends BasePlugin {
+	var $logger;
+	
+	function ExtractEmailSource(){
+        $this->logger =& LoggerManager::getLogger('ExtractEmailSource');
+    }
+	
+	function convertNodeToDOM($domNode) {
+	    //this function receives a node and converts it to Dom document
+	    $doc = new DOMDocument();
+		$doc->preserveWhiteSpace = true;
+	    $doc->appendChild($doc->importNode($domNode,true));
+	    return $doc;
+	}
+	function get_email_source($xpath) {
+
+	   $email_source = null;
+	   $td_source = $xpath->query('//td[@class="source user"]');
+	   if ($td_source->length > 0) {
+		   $td_element = $td_source->item(0);
+	       $tmpDOM = $this->convertNodeToDOM($td_element);
+		   $email_source = $tmpDOM->saveHTML();
+	   } else {
+		   $this->logger->error("Couldn't get email source through xpath query");
+	   }
+	   return $email_source;
+	}
+	
+	public function handleMessage(&$messageDetails) {
+		$source_html = $messageDetails['original_source'];
+		if ($source_html != null) {
+			$dom = new DOMDocument();
+			@$dom->loadHTML($source_html);
+			$xpath = new DOMXPath($dom);
+			$email_source = $this->get_email_source($xpath);
+			if ($email_source != null) {
+				
+				// remove enclosing <td class="source user"> <<email>> </td>"
+				$email_source = str_replace('<td class="source user">', '', $email_source);
+				$email_source = substr($email_source, 0, strlen($email_source) - 6);
+				
+				$messageDetails['original_email_source'] = $email_source;
+			}
+		}
+	}
+}
+?>

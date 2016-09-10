@@ -1,0 +1,49 @@
+<?php
+class CreateEml extends BasePlugin {
+	var $logger;
+    var $folder;
+	var $extension;
+	private $createArchive;
+	private $archiveFileName;
+	private $archive;
+	
+	function CreateEml(){
+        $this->logger =& LoggerManager::getLogger('CreateEml');
+    }
+
+    public function onLoad(&$settings) {
+		$this->folder = $settings['folder'];
+		$this->extension = $settings['extension'];
+		$this->createArchive = (array_key_exists('create.archive', $settings) ? $settings['create.archive'] : false);
+		$this->archiveFileName = (array_key_exists('archive.file', $settings) ? $settings['archive.file'] : 'eml.zip');
+		
+		if ($this->createArchive) {
+			$this->archive = ezcArchive::open($this->folder."/".$this->archiveFileName, $settings['archive.file.type']);
+		} else {
+			$this->archive = null;
+		}
+	}
+
+	public function handleMessage(&$messageDetails) {
+
+		$email = $messageDetails['email'];
+		$emailText = $email->body;
+
+		//TODO - Set the shameless plug to add the archiver application message
+		$emailText->setHeader('X-Message-No', $messageDetails['message_no']);
+		//TODO - Only one received header is stored after parsing, can we fix the email parser
+		// to store more than one header
+		$emlContent = $email->generate();
+
+		// TODO - platform indepent folder seperator
+		$fileName = $this->folder."/".$messageDetails['message_no'].".".$this->extension;
+		$this->logger->debug("Creating $fileName");
+		file_put_contents($fileName, $emlContent, LOCK_EX);
+		if (!$this->createArchive) {
+		} else {
+			$this->archive->appendToCurrent($fileName, dirname($fileName));
+			unlink($fileName);
+		}
+	}
+}
+?>

@@ -1,0 +1,124 @@
+eZ Components - Archive
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. contents:: Table of Contents
+
+Introduction
+============
+
+The Archive component provides a generic API for creating and extracting
+archives.  Currently, the Archive component supports the Tar and Zip formats.
+Compression algorithms, such as GZip or BZip2, are indirectly supported.
+The stream wrappers from PHP should be used to handle compressed archives.
+
+
+Class overview
+==============
+
+The following list sums up the most important classes:
+
+ezcArchive
+  This class provides the main API for accessing or creating a
+  Tar or Zip archive. ezcArchive provides methods for
+  extracting entries (files, directories, symbolic links and so on), appending
+  entries and removing entries. 
+
+ezcArchiveEntry
+  The ezcArchiveEntry class is returned when an entry (such as a file or
+  directory) is requested from the opened archive. ezcArchiveEntry provides
+  entry information about the path, its access rights and whether the entry is
+  a directory, a symbolic link, a hard link, a block-file and so on. The owner name, the
+  group name and the last access time are also available. 
+ 
+More information about these classes can be found in the documentation of the
+class itself. 
+
+
+Usage
+=====
+
+The following examples demonstrate how to use the Archive component.
+
+Extracting a Tar-archive
+------------------------
+
+The Tar format has more than one standard. The most common formats are:
+
+- Unix V7
+- Ustar
+- POSIX
+- Gnu
+
+The Archive component can extract from any of these formats. Appending entries
+to the archive is only available for the Unix V7 and Ustar formats. 
+
+Extracting entries can occur in two ways: 
+
+- ezcArchive->extract(), extracts all entries from the archive.
+- ezcArchive->extractCurrent(), extracts only the current entry.
+
+An ezcArchive object can be used like an iterator. After opening the file, it
+points to the first entry. The iterator can be moved using ezcArchive->next()
+and ezcArchive->rewind() to move to the next entry or go back to the first
+entry.
+
+The next example demonstrates how to extract an entire archive file-by-file:
+
+.. include:: tutorial_extract.php
+   :literal:
+
+First, tutorial_autoload.php is included. The included file loads the
+correct php files for the Archive package. Hereafter the time zone is set to
+"UTC". The Archive component uses some date functions and might therefore
+produce warnings if the time zone is not specified.
+
+The gzipped Tar archive is opened using the zlib stream. The while() method
+iterates over each entry, showing the name and extracting the entry itself. 
+
+The Archive component extends from the PHP Iterator class, thus the above
+example can be rewritten as follows:
+
+.. include:: tutorial_iterator.php
+   :literal:
+
+Please by aware that by default archive files are opened in read/write mode. In
+order to prevent that, you can set an option to open the archive in read-only
+mode. This also prevents the modify and create timestamps of the file to be
+preserved. The following example shows that:
+
+.. include:: tutorial_read_only.php
+   :literal:
+
+
+Appending files to an archive
+-----------------------------
+
+Unfortunately, it is not yet possible to directly append files to a gzipped or
+bzipped Tar archive. The ZLib and BZip2 libraries do not support opening a file
+for reading and writing.
+
+ezcArchive has two methods for appending files:
+
+- ezcArchive->append(), appends entries to the end of the archive.
+- ezcArchive->appendCurrent(), appends entries after the current entry and
+  removes the rest of the files from the archive.
+
+To replace the first file as well, use ezcArchive->truncate().  The 
+next example replaces all entries from an existing Zip archive with the files
+file1.txt and file2.txt:
+
+.. include:: tutorial_replacing.php
+   :literal:
+
+More Information
+================
+
+For more information, see the ezcArchive API documentation.
+
+
+..
+   Local Variables:
+   mode: rst
+   fill-column: 79
+   End: 
+   vim: et syn=rst tw=79

@@ -1,0 +1,52 @@
+<?php
+require('utf8/utils/validation.php');
+require('utf8/utils/bad.php');
+require('utf8/utils/ascii.php');
+
+class FixUtf8 extends BasePlugin {
+
+	var $logger;
+   
+	function FixUtf8(){
+        $this->logger =& LoggerManager::getLogger('FixUtf8');
+    }
+
+    public function onLoad(&$settings) {
+	}
+
+	public function handleMessage(&$messageDetails) {
+		
+		// TODO - need to do this for each mail part - text, html, etc.,
+		$message = $messageDetails['mail_body']['plain'][0];
+		if (!utf8_is_ascii($message)) {
+			
+			if (!utf8_is_valid($message)) {
+			    $this->logger->debug("Message is not valid UTF-8");
+				$message = utf8_bad_replace($message);
+
+				$email = $messageDetails['email'];
+				$emailText = $email->body;
+				if ($emailText instanceof ezcMailMultiPartAlternative) {
+					foreach ($emailText->getParts() as $key => $alternativePart) {
+						if ($alternativePart instanceof ezcMailText && $alternativePart->subType === 'plain') {
+							//$alternativePart->appendExcludeHeaders(array('Content-Type', 'Content-Transfer-Encoding'));
+							$alternativePart->__set('text', $message);
+							$alternativePart->__set('encoding', $emailText->getHeader('Content-Transfer-Encoding'));
+							$alternativePart->__set('charset', 'utf-8');
+						}
+					}
+				} 
+			}
+			
+			if ($message != @iconv("UTF-8", "UTF-8", $message)) { 
+			    $message = utf8_encode($message);
+				if ($message != @iconv("UTF-8", "UTF-8", $message)) { 
+					$this->logger->debug("Bad utf-8"); 
+				}
+		    } 
+			$messageDetails['mail_body']['plain'][0] = $message;
+		}
+	}
+}
+?>
+	

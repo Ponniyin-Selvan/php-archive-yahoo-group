@@ -1,0 +1,55 @@
+<?php
+class Imap extends BasePlugin {
+	var $logger;
+	private $mbox;
+	private $imapUrl;
+	
+	function Imap(){
+        $this->logger =& LoggerManager::getLogger('Imap');
+    }
+
+    public function onLoad(&$settings) {
+		$this->imapUrl = $settings["imap.url"];
+		$this->logger->debug("Connecting to IMAP using ".$this->imapUrl." with ".$settings["email"]." and ".$settings["password"], OP_HALFOPEN);
+		$this->mbox = imap_open($this->imapUrl, $settings["email"], $settings["password"]);
+		if (imap_errors() !== FALSE) {
+			$this->logger->error(print_r(imap_errors(), true));  
+		}
+	}
+
+    public function onUnLoad() {
+		imap_close($this->mbox);
+	}
+
+	public function handleMessage(&$messageDetails) {
+
+		$email = $messageDetails['email'];
+		$emailText = $email->body;
+
+		//TODO - Set the shameless plug to add the archiver application message
+		$emailText->setHeader('X-Message-No', $messageDetails['message_no']);
+		//TODO - Only one received header is stored after parsing, can we fix the email parser
+		// to store more than one header
+		$emlContent = $email->generate();
+		$before = imap_check($this->mbox);
+		if ($before !== FALSE) {	
+			imap_append($this->mbox, $this->imapUrl, $emlContent);
+			$after = imap_check($this->mbox);
+			if ($after !== FALSE) {
+				if ($before->Nmsgs == $after->Nmsgs) {
+					$this->logger->error("Couldn't append the message through IMAP ".print_r(imap_errors(), true));
+					if (imap_errors() !== FALSE) {
+						$this->logger->error("IMAP Errors ".print_r(imap_errors(), true));
+					}
+				} else {
+					$this->logger->info("Successfully appended the message through IMAP");
+				}
+			} else {
+				$this->logger->error("Couldn't run check on IMAP(after) ".print_r(imap_errors(), true));
+			}
+		} else {
+			$this->logger->error("Couldn't run check on IMAP ".print_r(imap_errors(), true));
+		}
+	}
+}
+?>

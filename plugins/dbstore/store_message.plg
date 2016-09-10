@@ -1,0 +1,33 @@
+<?php
+
+class StoreMessage extends BasePlugin {
+	var $logger;
+	var $db;
+   
+	function StoreMessage(){
+        $this->logger =& LoggerManager::getLogger('StoreMessage');
+    }
+
+    public function onLoad(&$settings) {
+		$this->db = new PDO($settings['db.datasource'], $settings['db.userid'], $settings['db.password']);
+		$this->db->exec('SET CHARACTER SET utf8');
+	}
+	
+    public function onUnload() {
+		$this->db = null;
+	}
+
+	public function handleMessage(&$messageDetails) {
+		$messageNo = $messageDetails['message_no'];
+		
+		$sql = 'INSERT INTO '.$this->settings['table.prefix'].'ygrp_messages(message_no, original_source) VALUES(?, COMPRESS(?))';
+		$stmt = $this->db->prepare($sql);
+		$stmt->bindParam(1, $messageNo, PDO::PARAM_INT);
+		$stmt->bindParam(2, $messageDetails['original_email_source'], PDO::PARAM_STR);
+		if ($stmt->execute() === false) {
+			$this->logger->error("Couldn't insert the message to ".$this->settings['table.prefix'].'ygrp_messages table');
+			$this->logger->error("Error Code ".$stmt->errorCode()." ==> ".print_r($stmt->errorInfo(), true));
+		}
+	}
+}
+?>

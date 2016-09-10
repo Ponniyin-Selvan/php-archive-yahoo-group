@@ -1,0 +1,9 @@
+<?php
+
+class CompressEmailSource extends BasePlugin {
+	
+	public function handleMessage(&$messageDetails) {
+		$messageDetails['original_email_source'] 
+			= gzcompress($messageDetails['original_email_source']);
+	}
+}

@@ -1,0 +1,38 @@
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+Peak Memory Usage 2
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+SQLSTATE[HY000] [2005] Unknown MySQL server host 'mysql.beta.ponniyinselvan.in' (1)
+#0 /home/.toufon/vittal/archive/plugins/dbstore/store_message.plg(12): PDO->__construct('mysql:host=mysq...', 'vittal', 'Vittal$ms7002')
+#1 /home/.toufon/vittal/archive/plugin_manager.php(38): StoreMessage->onLoad(Array)
+#2 /home/.toufon/vittal/archive/plugin_manager.php(89): PluginManager->register('StoreMessage', './plugins/dbsto...', Object(StoreMessage), Array)
+#3 /home/.toufon/vittal/archive/plugin_manager.php(97): PluginManager->loadPluginsFromFolder('./plugins/dbsto...')
+#4 /home/.toufon/vittal/archive/plugin_manager.php(55): PluginManager->loadPluginsFromFolder('./plugins/')
+#5 /home/.toufon/vittal/archive/archive.php(124): PluginManager->loadPlugins('./plugins/', Array)
+#6 /home/.toufon/vittal/archive/archive.php(24): Archive->initializePlugins()
+#7 /home/.toufon/vittal/archive/archive.php(279): Archive->initialize()
+#8 /home/.toufon/vittal/archive/archive.php(311): Archive->startArchive(27229)
+#9 {main}Exception occurred, stopping archive processX-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+Peak Memory Usage 2.25
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+Peak Memory Usage 3
+X-Powered-By: PHP/5.2.6
+Content-type: text/html
+
+Peak Memory Usage 2.75
